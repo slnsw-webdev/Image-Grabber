@@ -76,7 +76,8 @@
         autoResize: true, // This will auto-update the layout when the browser window is resized.
         container: $('#main'), // Optional, used for some extra CSS styling
         offset: 1, // Optional, the distance between grid items
-        itemWidth: 210 // Optional, the width of a grid item
+        itemWidth: 210, // Optional, the width of a grid item
+		flexibleWidth: true
       };
 	  
       /**
@@ -108,8 +109,7 @@
 				returnFocus: false,
 			  });
 			  
-			  $('#tiles li').trigger('resize');
-			  $(window).scrollTop(window.innerHeight-200);
+			  // $('#tiles li').trigger('resize');
 			  
 		  });
 	  };
@@ -147,13 +147,21 @@
 					// http://acms.sl.nsw.gov.au/_DAMx/image/17/118/aae_37054h.jpg
 					path_E = v.metaData['E'];
 					path_M = v.metaData['M'];
+					image_Title = v.title;
+					if (image_Title.length > 75) {
+						image_Title = image_Title.substr(0,75);
+					}
+					
+					var img = new Image();
+					img.src = 'http://acms.sl.nsw.gov.au/_DAMx/image/'+path_E+'/'+path_M+'h.jpg';
+					
 					html += '<li>';
 					// colorbox link
-					html += '<a href="http://acms.sl.nsw.gov.au/_DAMx/image/'+path_E+'/'+path_M+'h.jpg'+'" rel="lightbox">';
+					html += '<a href="'+img.src+'" title="'+v.title+'" rel="lightbox">';
 					// Image tag
-					html += '<img src="http://acms.sl.nsw.gov.au/_DAMx/image/'+path_E+'/'+path_M+'h.jpg'+'" width="200">';
+					html += '<img src="'+img.src+'" width="200" height="'+Math.round(img.height/img.width*200)+'">';
 					// Image title.
-					html += '<p>'+v.title+'</p>';
+					// html += '<p>'+image_Title+' ...</p>';
 					html += '</a>';
 					html += '</li>';
 					
@@ -204,21 +212,6 @@
 	$(window).bind('orientationchange', function() {
     	$(window).trigger('resize');
   	});
-	
-	var html = $('html'),
-    H = html.outerHeight(true),
-    S = $(window).scrollTop(),
-    P = S/H;
-
-	$(window).scroll(function() {
-		S = $(window).scrollTop();
-		P = S/H;
-	});
-	
-	$(window).resize(function() {
-		H = html.outerHeight(true);
-		$(window).scrollTop(P*H);
-	});
 	
   </script>
 	

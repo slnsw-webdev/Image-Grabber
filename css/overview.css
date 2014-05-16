@@ -15,27 +15,25 @@ color: #4281f5;
 }
 
 #main li {
-height: 200px;
+width: 200px;
 background-color: #ffffff;
 border: 1px solid #dddddd;
 }
 
 #main li a {
-font-weight: 200;
-text-align: left;
-box-shadow: none;
-color: #000000;
-font-size: 12px;
-line-height: 16px;
-height: auto;
-background-color: transparent;
-border: 0px;
-display: block;
-width: 200px;
-position: relative;
-height: 100%;
-display: block;
-text-transform: uppercase;
+  font-weight: 200;
+  text-align: left;
+  box-shadow: none;
+  color: #000000;
+  font-size: 0.8em;
+  line-height: 16px;
+  height: auto;
+  background-color: transparent;
+  border: 0px;
+  display: block;
+  width: 200px;
+  position: relative;
+  display: block;
 }
 
 #main li a:hover {
