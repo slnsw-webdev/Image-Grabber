@@ -11,34 +11,49 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="css/overview.css">
+        <link rel="stylesheet" href="css/colorbox.css">
         <script src="js/vendor/modernizr-2.6.2.min.js"></script>
         <script src="js/vendor/jquery-1.10.2.min.js"></script>
         <script src="js/plugins.js"></script>
         <script src="js/main.js"></script>
-		  <script src="js/jquery.imagesloaded.js"></script>
-  		  <script src="js/jquery.wookmark.js"></script>
-  		  <script src="js/jquery.colorbox-min.js"></script>
+		<script src="js/jquery.imagesloaded.js"></script>
+  		<script src="js/jquery.wookmark.min.js"></script>
+  		<script src="js/jquery.colorbox-min.js"></script>
     </head>
     <body>
+    
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-
         <div id="container">
-    <header>
-      <h1>FunnelBack API Example</h1>
-      <p>Scroll down to see more content loaded via the <a href="http://acmssearch.sl.nsw.gov.au" target="_blank">State Library of NSW API</a>.</p>
-      <p><form><input type="text" id="keyword" /><input type="button" value="Search" onclick="searchApi();"></form></p>
-    </header>
-    <div id="main" role="main">
+   		<div id="header">
+        	<div id="logocontainer">
+          		<img src="images/image-grabber_04.png" id="logo" name="logo">
+            </div>
+            <div id="searchform">
+              <form id="search" name="search">
+                <input type="text" id="keyword" name="keyword" />
+                <img src="images/image-grabber_07.png" onclick="submitSearch();">
+              </form>
+          	</div>
+            <div id="sllogocontainer">
+          		<img src="images/image-grabber_02.png" id="sl_logo" name="sl_logo">
+            </div>
+        </div>
+    
+      <div id="main" role="main">
+
+	  <div class="progress-bar"></div>
+
+	  <div id="loader">
+        <div id="loaderCircle"></div>
+      </div>
 
       <ul id="tiles">
         <!-- These is where we place content loaded from the SLNSW API -->
       </ul>
-
-      <div id="loader">
-        <div id="loaderCircle"></div>
-      </div>
+      
 
     </div>
 
@@ -49,114 +64,162 @@
 
   <!-- Once the page is loaded, initalize the plug-in. -->
   <script type="text/javascript">
-    (function ($) {
       var handler = null,
-          page = 1,
-          isLoading = false,
-          apiURL = 'http://acmssearch.sl.nsw.gov.au/s/search.xml?collection=slnsw&form=advanced&focus1=0&focustype1=1&focus2=0&focustype2=1&focus3=0&focustype3=1&meta_G_sand=Yes&sort=&num_ranks=10&query=';
+          page = 0,
+		  images_page = 30,
+		  start_rank = 1,
+		  loadedImages = 0,
+          isLoading = false;
 
       // Prepare layout options.
       var options = {
         autoResize: true, // This will auto-update the layout when the browser window is resized.
-        container: $('#tiles'), // Optional, used for some extra CSS styling
+        container: $('#main'), // Optional, used for some extra CSS styling
         offset: 1, // Optional, the distance between grid items
         itemWidth: 210 // Optional, the width of a grid item
       };
-
+	  
       /**
        * When scrolled all the way to the bottom, add more tiles.
        */
-      function onScroll(event) {
+      function onScroll(event) {		
         // Only check when we're not still waiting for data.
         if(!isLoading) {
           // Check if we're within 100 pixels of the bottom edge of the browser window.
           var closeToBottom = ($(window).scrollTop() + $(window).height() > $(document).height() - 100);
-          if(closeToBottom) {
-          	var keyword = $("keyword").val();
-            loadData(keyword);
+          if(closeToBottom) { 
+            loadData();
           }
         }
       };
-
-      /**
-       * Refreshes the layout.
-       */
-      function applyLayout() {
-        options.container.imagesLoaded(function() {
-          // Create a new layout handler when images have loaded.
-          handler = $('#tiles li');
-          handler.wookmark(options);
-        });
-      };
+	  
+	  function applyLayout() {
+		  options.container.imagesLoaded(function() {
+			  // Create a new layout handler when images have loaded.
+			  handler = $('#tiles li');
+			  handler.wookmark(options); // This line throws exception
+	  
+			  // Init lightbox
+			  $('a', handler).colorbox({
+				rel: 'lightbox',
+				opacity: 0.7,
+				width: "600px",
+				scrolling: true,
+				returnFocus: false,
+			  });
+			  
+			  $('#tiles li').trigger('resize');
+			  $(window).scrollTop(window.innerHeight-200);
+			  
+		  });
+	  };
 
       /**
        * Loads data from the API.
        */
-      function loadData(keyword) {
-        isLoading = true;
-        $('#loaderCircle').show();
+      function loadData() {
+		// increment the page  
+		page++;
+		// set the start position to call images   
+		start_rank = parseInt(images_page) * parseInt(page) + 1;
+		// create the API URL dynamically
+		apiURL ='http://acmssearch.sl.nsw.gov.au/s/search.json?collection=slnsw&form=advanced&focus1=0&focustype1=1&focus2=0&focustype2=1&focus3=0&focustype3=1&meta_G_sand=Yes&sort=&num_ranks=' + images_page + '&start_rank=' + start_rank + '&query=';
+		 
+		keyword = $("#keyword").val(); 
+		if (keyword.length) {
+				
+		  isLoading = true;
+		  $('#loaderCircle').show();	
+		  callURI = apiURL + keyword;
+		  jQuery.support.cors = true;
+		  // Assign handlers immediately after making the request,
+		  // and remember the jqXHR object for this request
+		  var jqxhr = $.ajax({
+			url: callURI,
+			dataType: 'jsonp'
+		  })
+		   .done(function( data ) {
+				
+			    // the returned data is a json obj
+				var html = '';
+				$.each(data.response.resultPacket.results, function(i, v) {
+    				// each result items contains the metadata fields we need to find the image paths
+					// http://acms.sl.nsw.gov.au/_DAMx/image/17/118/aae_37054h.jpg
+					path_E = v.metaData['E'];
+					path_M = v.metaData['M'];
+					html += '<li>';
+					// colorbox link
+					html += '<a href="http://acms.sl.nsw.gov.au/_DAMx/image/'+path_E+'/'+path_M+'h.jpg'+'" rel="lightbox">';
+					// Image tag
+					html += '<img src="http://acms.sl.nsw.gov.au/_DAMx/image/'+path_E+'/'+path_M+'h.jpg'+'" width="200">';
+					// Image title.
+					html += '<p>'+v.title+'</p>';
+					html += '</a>';
+					html += '</li>';
+					
+				});
+				
+				isLoading = false;
+		        $('#loaderCircle').hide();
+				
+				// Add image HTML to the page.
+		        $('#tiles').append(html);
+				
+				// apply layout
+				applyLayout();
+				
+				
+		   })
+		  .fail(function() {
+		  	alert( "Sorry no data could be retrieved API. Please ensure you an internet connection and try again.");
+			$('#loaderCircle').hide();  
+		  })
+		  .always(function() {
+				// tidy up code
+		  });
 		  
-        $.ajax({
-          url: apiURL + keyword,
-          dataType: 'xml',
-          data: {page: page}, // Page parameter to make sure we load new data
-          success: onLoadData
-        });
-      };
+		}
+		
+      };	
+	  
+	  function getParameterByName(name) {
+ 			return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
+	  };
+	  
+	  function submitSearch() {
+		 $("#search").submit(); 
+	  };
 
-      /**
-       * Receives data from the API, parses xml and creates HTML for images and updates the layout
-       */
-      function onLoadData(data) {
-        isLoading = false;
-        $('#loaderCircle').hide();
+     // Capture scroll event.
+     $(document).bind('scroll', onScroll);
+	 
+	 $(document).ready(function() {
+		keyWordVal = getParameterByName("keyword");
+  		if (keyWordVal != null && keyWordVal.length) {
+			$("#keyword").val(keyWordVal);
+			loadData();
+	  	}  
+	});
+	
+	$(window).bind('orientationchange', function() {
+    	$(window).trigger('resize');
+  	});
+	
+	var html = $('html'),
+    H = html.outerHeight(true),
+    S = $(window).scrollTop(),
+    P = S/H;
 
-        // Increment page index for future calls.
-        page++;
-        
-        // Create HTML for the images.
-        var html = '';
-        // parse xml to pull in image URL's
-        $(xml).find( "com.funnelback.publicui.search.model.padre.Result" ).each(
-        		function(){
-         		var item = $(this), 
-            	title =  item.find('title').text(),
-            	link =  item.find('link').text(),
-            	itemid =  item.find('docNum').text();    	
-            	
-            	html += '<li>';
-          		// Image tag
-          		html += '<img src="'+link+'" width="200">';
-          		// Image title.
-          		html += '<p>'+image.title+'</p>';
-          		html += '</li>';
-
-					//you can log all attributes
-            	//console.log(item[0].attributes);          		
-          		
-        		}
-        );
-
-        // Add image HTML to the page.
-        $('#tiles').append(html);
-
-        // Apply layout.
-        applyLayout();
-      };
-
-      // Capture scroll event.
-      $(document).bind('scroll', onScroll);
-
-      // Load first data from the API if search keyword entered
-      // disabled so does not run on initial load
-      // loadData();
-
-		function searchApi() {
-			var keyword = $("keyword").val();
-			loadData(keyword);		
-		}      
-      
-    })(jQuery);
+	$(window).scroll(function() {
+		S = $(window).scrollTop();
+		P = S/H;
+	});
+	
+	$(window).resize(function() {
+		H = html.outerHeight(true);
+		$(window).scrollTop(P*H);
+	});
+	
   </script>
 	
     </body>
