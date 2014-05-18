@@ -64,6 +64,15 @@
 
   <!-- Once the page is loaded, initalize the plug-in. -->
   <script type="text/javascript">
+  	  // IE 10 local file issue
+	  var oIndexDB = null;
+	  if ( window.indexedDB ) { 
+		 oIndexDB = window.indexedDB
+	  } 
+	  if ( oIndexDB == null ) {
+		 handleError();
+	  }
+  
       var handler = null,
           page = 0,
 		  images_page = 30,
@@ -79,6 +88,10 @@
         itemWidth: 210, // Optional, the width of a grid item
 		flexibleWidth: true
       };
+	  
+	  function handleError () {
+		 alert("Sorry your running a browser that doesn't allow local HTML files to create an indexedDB object. Please use chrome or firefox for best results!");  
+	  }
 	  
       /**
        * When scrolled all the way to the bottom, add more tiles.
